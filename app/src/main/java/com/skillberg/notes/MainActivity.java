@@ -1,53 +1,71 @@
 package com.skillberg.notes;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
+import android.app.LoaderManager;
+import android.content.CursorLoader;
+import android.content.Loader;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
 import com.skillberg.notes.db.NotesContract;
+import com.skillberg.notes.ui.NotesAdapter;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private NotesAdapter notesAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        insert();
-        select();
+        RecyclerView recyclerView = findViewById(R.id.notes_rv);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,
+                layoutManager.getOrientation());
+        recyclerView.addItemDecoration(dividerItemDecoration);
+
+        notesAdapter = new NotesAdapter(null);
+        recyclerView.setAdapter(notesAdapter);
+
+
+        getLoaderManager().initLoader(
+                0, // Идентификатор загрузчика
+                null, // Аргументы
+                this // Callback для событий загрузчика
+        );
     }
 
-    private void insert() {
-        ContentResolver contentResolver = getContentResolver();
 
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(NotesContract.Notes.COLUMN_TITLE, "Заголовок заметки");
-        contentValues.put(NotesContract.Notes.COLUMN_NOTE, "Текст заметки");
-        contentValues.put(NotesContract.Notes.COLUMN_CREATED_TS, System.currentTimeMillis());
-        contentValues.put(NotesContract.Notes.COLUMN_UPDATED_TS, System.currentTimeMillis());
-
-        Uri uri = contentResolver.insert(NotesContract.Notes.URI, contentValues);
-        Log.i("Test", "URI: " + uri);
-    }
-
-    private void select() {
-        ContentResolver contentResolver = getContentResolver();
-
-        Cursor cursor = contentResolver.query(
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(
+                this,  // Контекст
                 NotesContract.Notes.URI, // URI
                 NotesContract.Notes.LIST_PROJECTION, // Столбцы
                 null, // Параметры выборки
                 null, // Аргументы выборки
                 null // Сортировка по умолчанию
         );
-
-        Log.i("Test", "Count: " + cursor.getCount());
-
-        cursor.close();
     }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        Log.i("Test", "Load finished: " + cursor.getCount());
+
+        notesAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
 
 }

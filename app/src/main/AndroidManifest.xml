@@ -18,6 +18,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".CreateNoteActivity" />
+
         <provider
             android:name=".db.NotesProvider"
             android:authorities="com.skillberg.notes.provider"

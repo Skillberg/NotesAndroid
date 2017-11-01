@@ -2,6 +2,7 @@ package com.skillberg.notes;
 
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
 
 import com.skillberg.notes.db.NotesContract;
 import com.skillberg.notes.ui.NotesAdapter;
@@ -39,6 +41,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 null, // Аргументы
                 this // Callback для событий загрузчика
         );
+
+        findViewById(R.id.create_fab).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, CreateNoteActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
 
@@ -57,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         Log.i("Test", "Load finished: " + cursor.getCount());
+
+        cursor.setNotificationUri(getContentResolver(), NotesContract.Notes.URI);
 
         notesAdapter.swapCursor(cursor);
     }

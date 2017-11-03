@@ -1,5 +1,6 @@
 package com.skillberg.notes.db;
 
+import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
 

@@ -20,6 +20,8 @@
 
         <activity android:name=".CreateNoteActivity" />
 
+        <activity android:name=".NoteActivity" />
+
         <provider
             android:name=".db.NotesProvider"
             android:authorities="com.skillberg.notes.provider"

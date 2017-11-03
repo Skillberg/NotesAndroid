@@ -57,6 +57,23 @@ public class NotesProvider extends ContentProvider {
                         sortOrder);
 
             case NOTE:
+                String id = uri.getLastPathSegment();
+
+                if (TextUtils.isEmpty(selection)) {
+                    selection = NotesContract.Notes._ID + " = ?";
+                    selectionArgs = new String[]{id};
+                } else {
+                    selection = selection + " AND " + NotesContract.Notes._ID + " = ?";
+
+                    String[] newSelectionArgs = new String[selectionArgs.length + 1];
+
+                    System.arraycopy(selectionArgs, 0, newSelectionArgs, 0, selectionArgs.length);
+
+                    newSelectionArgs[newSelectionArgs.length - 1] = id;
+
+                    selectionArgs = newSelectionArgs;
+                }
+
                 return db.query(NotesContract.Notes.TABLE_NAME,
                         projection,
                         selection,
@@ -119,6 +136,36 @@ public class NotesProvider extends ContentProvider {
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues contentValues,
                       @Nullable String selection, @Nullable String[] selectionArgs) {
+
+        SQLiteDatabase db = notesDbHelper.getWritableDatabase();
+
+        switch (URI_MATCHER.match(uri)) {
+            case NOTE:
+                String id = uri.getLastPathSegment();
+
+                if (TextUtils.isEmpty(selection)) {
+                    selection = NotesContract.Notes._ID + " = ?";
+                    selectionArgs = new String[]{id};
+                } else {
+                    selection = selection + " AND " + NotesContract.Notes._ID + " = ?";
+
+                    String[] newSelectionArgs = new String[selectionArgs.length + 1];
+
+                    System.arraycopy(selectionArgs, 0, newSelectionArgs, 0, selectionArgs.length);
+
+                    newSelectionArgs[newSelectionArgs.length - 1] = id;
+
+                    selectionArgs = newSelectionArgs;
+                }
+
+                int rowsUpdated = db.update(NotesContract.Notes.TABLE_NAME, contentValues, selection, selectionArgs);
+
+                getContext().getContentResolver().notifyChange(uri, null);
+
+                return rowsUpdated;
+        }
+
+
         return 0;
     }
 }

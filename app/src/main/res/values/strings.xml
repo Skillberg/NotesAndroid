@@ -5,6 +5,7 @@
     <string name="hint_text">Текст заметки</string>
 
     <string name="title_save">Сохранить</string>
+    <string name="title_edit">Редактировать</string>
 
     <string name="error_empty_field">Необходимо заполнить поле</string>
 </resources>

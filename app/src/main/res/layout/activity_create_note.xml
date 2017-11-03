@@ -55,7 +55,8 @@
                     android:hint="@string/hint_text"
                     android:inputType="textCapSentences|textMultiLine"
                     android:lines="3"
-                    android:maxLines="999" />
+                    android:maxLines="999"
+                    android:scrollbars="none" />
 
             </android.support.design.widget.TextInputLayout>
 

@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.skillberg.notes">
 
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -26,6 +30,18 @@
             android:name=".db.NotesProvider"
             android:authorities="com.skillberg.notes.provider"
             android:exported="false" />
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.skillberg.notes.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+
+        </provider>
 
     </application>
 

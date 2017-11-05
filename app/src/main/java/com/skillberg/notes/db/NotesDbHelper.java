@@ -21,7 +21,9 @@ public class NotesDbHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+        if (oldVersion == 1 && newVersion == 2) {
+            sqLiteDatabase.execSQL(NotesContract.Images.CREATE_TABLE);
+        }
     }
 }

@@ -8,4 +8,13 @@
     <string name="title_edit">Редактировать</string>
 
     <string name="error_empty_field">Необходимо заполнить поле</string>
+    <string name="title_attach_image">Прикрепить изображение</string>
+
+    <string name="title_dialog_attachment_variants">Прикрепить изображение</string>
+
+    <string-array name="attachment_variants">
+        <item>Выбрать из галереи</item>
+        <item>Сделать снимок</item>
+    </string-array>
+
 </resources>

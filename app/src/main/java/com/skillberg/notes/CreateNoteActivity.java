@@ -1,16 +1,11 @@
 package com.skillberg.notes;
 
 import android.app.AlertDialog;
-import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.Loader;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,24 +14,25 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.content.FileProvider;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.skillberg.notes.db.NotesContract;
+import com.skillberg.notes.ui.NoteImagesAdapter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * Activity для создания новой заметки
  */
-public class CreateNoteActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class CreateNoteActivity extends BaseNoteActivity {
 
     public static final String EXTRA_NOTE_ID = "note_id";
 
@@ -48,8 +44,6 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
 
     private TextInputLayout titleTil;
     private TextInputLayout textTil;
-
-    private long noteId;
 
     private File currentImageFile;
 
@@ -71,15 +65,37 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
         titleTil = findViewById(R.id.title_til);
         textTil = findViewById(R.id.text_til);
 
+        RecyclerView recyclerView = findViewById(R.id.images_rv);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        noteImagesAdapter = new NoteImagesAdapter(null);
+        recyclerView.setAdapter(noteImagesAdapter);
+
         noteId = getIntent().getLongExtra(EXTRA_NOTE_ID, -1);
 
         if (noteId != -1) {
-            getLoaderManager().initLoader(
-                    0, // Идентификатор загрузчика
-                    null, // Аргументы
-                    this // Callback для событий загрузчика
-            );
+            initNoteLoader();
+
+            initImagesLoader();
         }
+    }
+
+    /**
+     * Отображаем данные из курсора
+     */
+    @Override
+    protected void displayNote(Cursor cursor) {
+        if (!cursor.moveToFirst()) {
+            // Если не получилось перейти к первой строке — завершаем Activity
+
+            finish();
+        }
+
+        String title = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.Notes.COLUMN_TITLE));
+        String noteText = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.Notes.COLUMN_NOTE));
+
+        titleEt.setText(title);
+        textEt.setText(noteText);
     }
 
     @Override
@@ -114,6 +130,7 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
         }
     }
 
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -130,11 +147,13 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
                     // Получаем InputStream, из которого будем декодировать Bitmap
                     InputStream inputStream = getContentResolver().openInputStream(imageUri);
 
-                    // Декодируем Bitmap
-                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    // Копируем изображение в наш файл
+                    File imageFile = createImageFile();
 
-                    Log.i("Test", "Bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-                } catch (FileNotFoundException e) {
+                    writeInputStreamToFile(inputStream, imageFile);
+
+                    addImageToDatabase(imageFile);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
 
@@ -142,9 +161,11 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
         } else if (requestCode == REQUEST_CODE_TAKE_PHOTO
                 && resultCode == RESULT_OK) {
 
-            Bitmap bitmap = BitmapFactory.decodeFile(currentImageFile.getAbsolutePath());
+            // Сохраняем изображение
+            addImageToDatabase(currentImageFile);
 
-            Log.i("Test", "Bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+            // На всякий случай обнуляем файл
+            currentImageFile = null;
         }
     }
 
@@ -201,49 +222,6 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
         }
     }
 
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(
-                this,  // Контекст
-                ContentUris.withAppendedId(NotesContract.Notes.URI, noteId), // URI
-                NotesContract.Notes.SINGLE_PROJECTION, // Столбцы
-                null, // Параметры выборки
-                null, // Аргументы выборки
-                null // Сортировка по умолчанию
-        );
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Log.i("Test", "Load finished: " + cursor.getCount());
-
-        cursor.setNotificationUri(getContentResolver(), NotesContract.Notes.URI);
-
-        displayNote(cursor);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
-
-    /**
-     * Отображаем данные из курсора
-     */
-    private void displayNote(Cursor cursor) {
-        if (!cursor.moveToFirst()) {
-            // Если не получилось перейти к первой строке — завершаем Activity
-
-            finish();
-        }
-
-        String title = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.Notes.COLUMN_TITLE));
-        String noteText = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.Notes.COLUMN_NOTE));
-
-        titleEt.setText(title);
-        textEt.setText(noteText);
-    }
 
     /**
      * Показываем диалог выбора изображения
@@ -324,6 +302,41 @@ public class CreateNoteActivity extends AppCompatActivity implements LoaderManag
 
             startActivityForResult(intent, REQUEST_CODE_TAKE_PHOTO);
         }
+    }
+
+    /**
+     * Пишем из InputStream в файл
+     */
+    private void writeInputStreamToFile(InputStream inputStream, File outFile) throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream(outFile);
+
+        byte[] buffer = new byte[8192];
+        int n;
+
+        while ((n = inputStream.read(buffer)) > 0) {
+            fileOutputStream.write(buffer, 0, n);
+        }
+
+        fileOutputStream.flush();
+        fileOutputStream.close();
+
+        inputStream.close();
+    }
+
+    /**
+     * Добавляем изображение в БД
+     */
+    private void addImageToDatabase(File file) {
+        if (noteId == -1) {
+            // На данный момент мы добавляем аттачи только в режиме редактирования
+            return;
+        }
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(NotesContract.Images.COLUMN_PATH, file.getAbsolutePath());
+        contentValues.put(NotesContract.Images.COLUMN_NOTE_ID, noteId);
+
+        getContentResolver().insert(NotesContract.Images.URI, contentValues);
     }
 
 }

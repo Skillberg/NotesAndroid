@@ -21,9 +21,15 @@ public class NotesProvider extends ContentProvider {
     private static final int NOTES = 1;
     private static final int NOTE = 2;
 
+    private static final int IMAGES = 3;
+    private static final int IMAGE = 4;
+
     static {
         URI_MATCHER.addURI(NotesContract.AUTHORITY, "notes", NOTES);
         URI_MATCHER.addURI(NotesContract.AUTHORITY, "notes/#", NOTE);
+
+        URI_MATCHER.addURI(NotesContract.AUTHORITY, "images", IMAGES);
+        URI_MATCHER.addURI(NotesContract.AUTHORITY, "image/#", IMAGE);
     }
 
     private NotesDbHelper notesDbHelper;
@@ -82,6 +88,19 @@ public class NotesProvider extends ContentProvider {
                         null,
                         sortOrder);
 
+            case IMAGES:
+                if (TextUtils.isEmpty(sortOrder)) {
+                    sortOrder = NotesContract.Images._ID + " ASC";
+                }
+
+                return db.query(NotesContract.Images.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+
             default:
                 return null;
         }
@@ -97,6 +116,12 @@ public class NotesProvider extends ContentProvider {
 
             case NOTE:
                 return NotesContract.Notes.URI_TYPE_NOTE_ITEM;
+
+            case IMAGES:
+                return NotesContract.Images.URI_TYPE_IMAGE_DIR;
+
+            case IMAGE:
+                return NotesContract.Images.URI_TYPE_IMAGE_ITEM;
 
             default:
                 return null;
@@ -123,6 +148,20 @@ public class NotesProvider extends ContentProvider {
 
                 return null;
 
+            case IMAGES:
+                long imageRowId = db.insert(NotesContract.Images.TABLE_NAME,
+                        null,
+                        contentValues);
+
+                if (imageRowId > 0) {
+                    Uri imageUri = ContentUris.withAppendedId(NotesContract.Images.URI, imageRowId);
+                    getContext().getContentResolver().notifyChange(uri, null);
+
+                    return imageUri;
+                }
+
+                return null;
+
             default:
                 return null;
         }
@@ -130,6 +169,51 @@ public class NotesProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
+
+        SQLiteDatabase db = notesDbHelper.getWritableDatabase();
+
+        switch (URI_MATCHER.match(uri)) {
+            case NOTE:
+                String noteId = uri.getLastPathSegment();
+
+                if (TextUtils.isEmpty(selection)) {
+                    selection = NotesContract.Notes._ID + " = ?";
+                    selectionArgs = new String[]{noteId};
+                } else {
+                    selection = selection + " AND " + NotesContract.Notes._ID + " = ?";
+                    String[] newSelectionArgs = new String[selectionArgs.length + 1];
+                    System.arraycopy(selectionArgs, 0, newSelectionArgs, 0, selectionArgs.length);
+                    newSelectionArgs[newSelectionArgs.length - 1] = noteId;
+                    selectionArgs = newSelectionArgs;
+                }
+
+                int noteRowsUpdated = db.delete(NotesContract.Notes.TABLE_NAME, selection, selectionArgs);
+
+                getContext().getContentResolver().notifyChange(uri, null);
+
+                return noteRowsUpdated;
+
+            case IMAGE:
+                String imageId = uri.getLastPathSegment();
+
+                if (TextUtils.isEmpty(selection)) {
+                    selection = NotesContract.Images._ID + " = ?";
+                    selectionArgs = new String[]{imageId};
+                } else {
+                    selection = selection + " AND " + NotesContract.Images._ID + " = ?";
+                    String[] newSelectionArgs = new String[selectionArgs.length + 1];
+                    System.arraycopy(selectionArgs, 0, newSelectionArgs, 0, selectionArgs.length);
+                    newSelectionArgs[newSelectionArgs.length - 1] = imageId;
+                    selectionArgs = newSelectionArgs;
+                }
+
+                int imageRowsUpdated = db.delete(NotesContract.Images.TABLE_NAME, selection, selectionArgs);
+
+                getContext().getContentResolver().notifyChange(uri, null);
+
+                return imageRowsUpdated;
+        }
+
         return 0;
     }
 

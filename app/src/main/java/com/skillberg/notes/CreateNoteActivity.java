@@ -68,7 +68,7 @@ public class CreateNoteActivity extends BaseNoteActivity {
         RecyclerView recyclerView = findViewById(R.id.images_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-        noteImagesAdapter = new NoteImagesAdapter(null);
+        noteImagesAdapter = new NoteImagesAdapter(null, onNoteImageLongClickListener);
         recyclerView.setAdapter(noteImagesAdapter);
 
         noteId = getIntent().getLongExtra(EXTRA_NOTE_ID, -1);
@@ -338,5 +338,38 @@ public class CreateNoteActivity extends BaseNoteActivity {
 
         getContentResolver().insert(NotesContract.Images.URI, contentValues);
     }
+
+    /**
+     * Удаляем изображение
+     */
+    private void deleteImage(long imageId) {
+        getContentResolver().delete(ContentUris.withAppendedId(NotesContract.Images.URI, imageId),
+                null,
+                null);
+    }
+
+    /**
+     * Listener для лонгтапов по изображению
+     */
+    private final NoteImagesAdapter.OnNoteImageLongClickListener onNoteImageLongClickListener =
+            new NoteImagesAdapter.OnNoteImageLongClickListener() {
+                @Override
+                public void onImageLongClick(final long imageId) {
+                    AlertDialog alertDialog = new AlertDialog.Builder(CreateNoteActivity.this)
+                            .setMessage(R.string.message_delete_image)
+                            .setPositiveButton(R.string.title_btn_yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    deleteImage(imageId);
+                                }
+                            })
+                            .setNegativeButton(R.string.title_btn_no, null)
+                            .create();
+
+                    if (!isFinishing()) {
+                        alertDialog.show();
+                    }
+                }
+            };
 
 }

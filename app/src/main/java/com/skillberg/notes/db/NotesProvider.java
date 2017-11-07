@@ -29,7 +29,7 @@ public class NotesProvider extends ContentProvider {
         URI_MATCHER.addURI(NotesContract.AUTHORITY, "notes/#", NOTE);
 
         URI_MATCHER.addURI(NotesContract.AUTHORITY, "images", IMAGES);
-        URI_MATCHER.addURI(NotesContract.AUTHORITY, "image/#", IMAGE);
+        URI_MATCHER.addURI(NotesContract.AUTHORITY, "images/#", IMAGE);
     }
 
     private NotesDbHelper notesDbHelper;

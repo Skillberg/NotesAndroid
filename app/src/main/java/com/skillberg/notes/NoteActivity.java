@@ -39,7 +39,7 @@ public class NoteActivity extends BaseNoteActivity {
         RecyclerView recyclerView = findViewById(R.id.images_rv);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-        noteImagesAdapter = new NoteImagesAdapter(null);
+        noteImagesAdapter = new NoteImagesAdapter(null, null);
         recyclerView.setAdapter(noteImagesAdapter);
 
         noteId = getIntent().getLongExtra(EXTRA_NOTE_ID, -1);

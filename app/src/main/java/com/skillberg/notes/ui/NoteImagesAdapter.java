@@ -3,6 +3,7 @@ package com.skillberg.notes.ui;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,9 +18,14 @@ import com.skillberg.notes.db.NotesContract;
  */
 public class NoteImagesAdapter extends CursorRecyclerAdapter<NoteImagesAdapter.ViewHolder> {
 
+    @Nullable
+    private final OnNoteImageLongClickListener onNoteImageLongClickListener;
 
-    public NoteImagesAdapter(Cursor cursor) {
+    public NoteImagesAdapter(Cursor cursor,
+                             @Nullable OnNoteImageLongClickListener onNoteImageLongClickListener) {
         super(cursor);
+
+        this.onNoteImageLongClickListener = onNoteImageLongClickListener;
     }
 
 
@@ -54,8 +60,28 @@ public class NoteImagesAdapter extends CursorRecyclerAdapter<NoteImagesAdapter.V
             super(itemView);
 
             imageView = (ImageView) itemView;
+
+            if (onNoteImageLongClickListener != null) {
+                itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        long imageId = (long) ViewHolder.this.itemView.getTag();
+
+                        onNoteImageLongClickListener.onImageLongClick(imageId);
+
+                        return true;
+                    }
+                });
+            }
         }
 
+    }
+
+    /**
+     * Интерфейс для обработки кликов на изображении
+     */
+    public interface OnNoteImageLongClickListener {
+        void onImageLongClick(long imageId);
     }
 
 }

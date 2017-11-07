@@ -12,6 +12,11 @@
 
     <string name="title_dialog_attachment_variants">Прикрепить изображение</string>
 
+    <string name="message_delete_image">Удалить изображение?</string>
+
+    <string name="title_btn_yes">Да</string>
+    <string name="title_btn_no">Нет</string>
+
     <string-array name="attachment_variants">
         <item>Выбрать из галереи</item>
         <item>Сделать снимок</item>
